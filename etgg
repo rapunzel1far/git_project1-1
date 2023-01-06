@@ -1,0 +1,94 @@
+def ping():
+
+    racket_w = 15  # width
+    racket_h = 100  # height
+    racket_speed = 8
+
+    point_left = point_right = 0
+    font = pygame.font.Font(None, 50)
+
+    ball_r = 10
+    ball_d = 2 * ball_r
+    ball_speed = 4
+    ball_start_x = WIDTH / 2
+    ball_start_y = HEIGHT / 2
+    dx = 1
+    dy = -1
+
+    screen = pygame.display.set_mode(size)
+
+    racket_right = pygame.Rect(WIDTH - racket_w - 5, int(HEIGHT / 2 - racket_h / 2), racket_w, racket_h)
+    racket_left = pygame.Rect(5, int(HEIGHT / 2 - racket_h / 2), racket_w, racket_h)
+    ball = pygame.Rect(ball_start_x, ball_start_y, ball_d, ball_d)
+
+    green = (87, 166, 57)  # Тёмный жёлто-зелёный
+    racket_color = (187, 0, 10)
+    clock = pygame.time.Clock()
+
+    # pygame.display.set_caption('Ping-Pong')
+    sound = pygame.mixer.Sound('data/ball_sound.mp3.mp3')
+    pause = False
+    game = True
+    while True:
+        screen.fill(green)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+        key = pygame.key.get_pressed()
+        if key[pygame.K_UP] and racket_right.top > 0:
+            racket_right.top -= racket_speed
+        elif key[pygame.K_DOWN] and racket_right.bottom < HEIGHT:
+            racket_right.bottom += racket_speed
+        elif key[pygame.K_w] and racket_left.top > 0:
+            racket_left.top -= racket_speed
+        elif key[pygame.K_s] and racket_left.bottom < HEIGHT:
+            racket_left.bottom += racket_speed
+
+        pygame.draw.rect(screen, racket_color, racket_right)
+        pygame.draw.rect(screen, racket_color, racket_left)
+        pygame.draw.circle(screen, (255, 255, 255), ball.center, ball_r)
+        ball.x += ball_speed * dx
+        ball.y += ball_speed * dy
+
+        if ball.centery < ball_r or ball.centery > HEIGHT:
+            dy = -dy
+            pygame.mixer.Sound.play(sound)
+        elif ball.colliderect(racket_left) or ball.colliderect(racket_right):
+            if ball.colliderect(racket_left):
+                ball_speed += 1
+            pygame.mixer.Sound.play(sound)
+            dx = -dx
+
+        if ball.centerx > WIDTH:
+            point_right += 1
+            ball.x = ball_start_x
+            ball.y = ball_start_y
+
+            dx = dy = 0
+            goal_time = pygame.time.get_ticks()
+            pause = True
+
+        if ball.centerx < 0:
+            point_left += 1
+            ball.x = ball_start_x
+            ball.y = ball_start_y
+
+            dx = dy = 0
+            goal_time = pygame.time.get_ticks()
+            pause = True
+        if pause:
+            ball_speed = 4
+            time = pygame.time.get_ticks()
+            if time - goal_time > 2500:
+                dx = random.choice((1, -1))
+                dy = random.choice((1, -1))
+                pause = False
+
+        right_text = font.render(f"{point_left}", True, pygame.Color("White"))
+        screen.blit(right_text, (WIDTH - 40, 20))
+
+        left_text = font.render(f"{point_right}", True, pygame.Color("White"))
+        screen.blit(left_text, (20, 20))
+
+        pygame.display.flip()
+        clock.tick(FPS)
